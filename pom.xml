@@ -21,6 +21,11 @@
             <artifactId>javafx-controls</artifactId>
             <version>16</version>
         </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.30</version>
+        </dependency>
         <!-- Add more JavaFX dependencies here if needed -->
     </dependencies>
 

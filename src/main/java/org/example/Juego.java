@@ -1,133 +1,110 @@
 package org.example;
+import javafx.beans.Observable;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
-import javafx.application.Application;
-import javafx.scene.Scene;
-import javafx.scene.control.Label;
-import javafx.scene.layout.GridPane;
-import javafx.stage.Stage;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Scanner;
-
-public class Juego extends Application {
-    private static final int TAMAÑO_MAPA = 10;
+public class Juego {
+    private static final int TAMANIO_MAPA = 30;
+    private char[][] mapa = new char[TAMANIO_MAPA][TAMANIO_MAPA];
     private Jugador jugador;
-    private List<Enemigo> enemigos;
+    private Enemigo[] enemigos;
+    private int movimientosJugador = 0;
+    ObservableList<String> Movimientos = FXCollections.observableArrayList();
 
-    private Scanner scanner;
-
-    // Constructor, inicialización y otros métodos...
-
-
-
-    // Método para verificar si algún enemigo ha capturado al jugador
     public Juego() {
-        // Inicialización del jugador y enemigos...
-        jugador = new Jugador(1, 1);
-        enemigos = new ArrayList<>();
-        // Añadir algunos enemigos...
-        enemigos.add(new Enemigo(10, 10));
-        // ...
-
-        scanner = new Scanner(System.in);
-
-        // Agregar los enemigos como observadores del jugador
+        this.jugador = new Jugador();
+        this.enemigos = new Enemigo[]{new Enemigo(), new Enemigo(), new Enemigo()};
+        inicializarMapa();
         for (Enemigo enemigo : enemigos) {
-            jugador.agregar(enemigo);
+            this.Movimientos.addListener(enemigo);
         }
     }
 
-    // Método para mostrar el mapa
-    public void mostrarMapa() {
-        char[][] mapa = new char[TAMAÑO_MAPA][TAMAÑO_MAPA];
-
-        // Inicializar el mapa con puntos
-        for (int i = 0; i < TAMAÑO_MAPA; i++) {
-            for (int j = 0; j < TAMAÑO_MAPA; j++) {
+    private void inicializarMapa() {
+        for (int i = 0; i < TAMANIO_MAPA; i++) {
+            for (int j = 0; j < TAMANIO_MAPA; j++) {
                 mapa[i][j] = '.';
             }
         }
+    }
 
-        // Colocar al jugador en el mapa
-        mapa[jugador.getY() - 1][jugador.getX() - 1] = 'J';
-
-        // Colocar a los enemigos en el mapa
+    private void actualizarMapa() {
+        inicializarMapa();
+        mapa[jugador.getPosicionY()][jugador.getPosicionX()] = 'J';
         for (Enemigo enemigo : enemigos) {
-            mapa[enemigo.getY() - 1][enemigo.getX() - 1] = 'E';
+            mapa[enemigo.getPosicionY()][enemigo.getPosicionX()] = 'E';
         }
+    }
 
-        // Imprimir el mapa
-        for (int i = 0; i < TAMAÑO_MAPA; i++) {
-            for (int j = 0; j < TAMAÑO_MAPA; j++) {
+    private void imprimirMapa() {
+        for (int i = 0; i < TAMANIO_MAPA; i++) {
+            for (int j = 0; j < TAMANIO_MAPA; j++) {
                 System.out.print(mapa[i][j] + " ");
             }
             System.out.println();
         }
     }
 
-    public boolean verificarCaptura() {
+    public void mostrarCoordenadas() {
+        imprimirMensaje("Jugador: (" + jugador.getPosicionX() + ", " + jugador.getPosicionY() + ")");
         for (Enemigo enemigo : enemigos) {
-            if (enemigo.getX() == jugador.getX() && enemigo.getY() == jugador.getY()) {
-                System.out.println("¡El jugador ha sido capturado por un enemigo!");
-                return true; // Retorna true si algún enemigo captura al jugador
-            }
+            imprimirMensaje("Enemigo: (" + enemigo.getPosicionX() + ", " + enemigo.getPosicionY() + ")");
         }
-        return false; // Retorna false si el jugador no ha sido capturado
     }
 
-    // Método para iniciar y ejecutar el juego
-    public void jugar() {
-        boolean jugadorCapturado = false;
+    public void jugar() throws IOException {
+        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        String movimiento;
+        imprimirMensaje("Posiciones Iniciales:");
+        mostrarCoordenadas();
+        actualizarMapa();
+        imprimirMapa();
 
-        while (!jugadorCapturado) {
-            mostrarMapa(); // Mostrar el mapa
-            System.out.println("Mueve al jugador (w: arriba, s: abajo, a: izquierda, d: derecha): ");
-            String movimiento = scanner.nextLine(); // Lee la entrada del usuario
+        do {
+            imprimirMensaje("Haz un movimiento: a,s,d,w o");
+            movimiento = br.readLine();
+            this.moverJugador(movimiento);
+            this.Movimientos.add(jugador.getPosicionX() + "," + jugador.getPosicionY());
 
-            if (movimiento.length() > 0) {
-                char direccion = movimiento.charAt(0);
-                jugador.mover(direccion); // Mueve al jugador según la entrada
+            actualizarMapa();
+            imprimirMapa();
 
-                // Actualizar la posición de los enemigos y verificar captura
-                jugadorCapturado = verificarCaptura();
-            }
+            movimientosJugador++;
+            mostrarCoordenadas();
+        } while (!this.comprobarMuerte());
 
-            // Opcional: Mostrar las posiciones del jugador y enemigos
-            System.out.println("Posición del Jugador: (" + jugador.getX() + ", " + jugador.getY() + ")");
-            for (Enemigo enemigo : enemigos) {
-                enemigo.mostrarPosicion();
-            }
-        }
-
-        System.out.println("Fin del juego: el jugador ha sido capturado.");
+        imprimirMensaje("Has muerto en " + movimientosJugador + " movimientos");
     }
 
-    @Override
-    public void start(Stage primaryStage) {
-        GridPane gridPane = new GridPane();
-        Label[][] labels = new Label[TAMAÑO_MAPA][TAMAÑO_MAPA];
-
-        for (int i = 0; i < TAMAÑO_MAPA; i++) {
-            for (int j = 0; j < TAMAÑO_MAPA; j++) {
-                labels[i][j] = new Label(".");
-                gridPane.add(labels[i][j], j, i);
-            }
-        }
-
-        labels[jugador.getY() - 1][jugador.getX() - 1].setText("J");
-
+    public boolean comprobarMuerte() {
         for (Enemigo enemigo : enemigos) {
-            labels[enemigo.getY() - 1][enemigo.getX() - 1].setText("E");
+            if (jugador.getPosicionX() == enemigo.getPosicionX() && jugador.getPosicionY() == enemigo.getPosicionY()) {
+                return true;
+            }
         }
-
-        Scene scene = new Scene(gridPane, 400, 400);
-        primaryStage.setScene(scene);
-        primaryStage.show();
+        return false;
     }
 
-    public static void main(String[] args) {
-        launch(args);
+    public void moverJugador(String movimiento) {
+        int dx = 0, dy = 0;
+        switch (movimiento) {
+            case "a": dx = -1; break;
+            case "d": dx = 1; break;
+            case "w": dy = -1; break;
+            case "s": dy = 1; break;
+            case "exit": System.exit(0);
+            default: imprimirMensaje("Movimiento invalido");
+        }
+
+        jugador.setPosicionX(Math.min(Math.max(jugador.getPosicionX() + dx, 0), TAMANIO_MAPA - 1));
+        jugador.setPosicionY(Math.min(Math.max(jugador.getPosicionY() + dy, 0), TAMANIO_MAPA - 1));
+    }
+
+    private void imprimirMensaje(String mensaje) {
+        System.out.println(mensaje);
     }
 }
-

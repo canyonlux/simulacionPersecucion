@@ -1,75 +1,25 @@
 package org.example;
-import javafx.collections.ListChangeListener;
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.SimpleIntegerProperty;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 
-import java.util.ArrayList;
-import java.util.List;
+import lombok.Data;
 
-public class Jugador implements Subject {
-    private List<Observer> observers; // Lista de observadores
-    private IntegerProperty x; // Coordenada x del jugador
-    private IntegerProperty y; // Coordenada y del jugador
+/**
+ * Clase que representa al jugador en el juego.
+ * Gestiona la posición del jugador y verifica los límites del mapa.
+ */
+@Data
+public class Jugador {
+    private static final int TAMANIO_MAPA = 30; // Tamaño del mapa para posiciones
+    private String nombre;
+    private int posicionX;
+    private int posicionY;
 
-    // Constructor
-    public Jugador(int x, int y) {
-        this.observers = new ArrayList<>();
-        this.x = new SimpleIntegerProperty(x);
-        this.y = new SimpleIntegerProperty(y);
+    /**
+     * Constructor que inicializa el jugador con un nombre y una posición aleatoria en el mapa.
+     */
+    public Jugador() {
+        this.nombre = "Jugador";
+        this.posicionX = (int) (Math.random() * TAMANIO_MAPA);
+        this.posicionY = (int) (Math.random() * TAMANIO_MAPA);
     }
 
-    // Métodos de Subject
-    @Override
-    public void agregar(Observer o) {
-        observers.add(o);
-    }
-
-
-    @Override
-    public void notificar(int x, int y) {
-        for (Observer observer : observers) {
-            observer.actualizar(x, y);
-        }
-    }
-
-
-    // Métodos de movimiento
-    public void mover(char direccion) {
-        switch (direccion) {
-            case 'a': // izquierda
-                this.x.set(this.x.get() - 1);
-                break;
-            case 'd': // derecha
-                this.x.set(this.x.get() + 1);
-                break;
-            case 'w': // arriba
-                this.y.set(this.y.get() - 1);
-                break;
-            case 's': // abajo
-                this.y.set(this.y.get() + 1);
-                break;
-            default:
-                System.out.println("Dirección no válida");
-        }
-        notificar(this.x.get(), this.y.get());// Notifica a los observadores después de cada movimiento
-    }
-
-    // Getters para las coordenadas
-    public int getX() {
-        return x.get();
-    }
-
-    public IntegerProperty xProperty() {
-        return x;
-    }
-
-    public int getY() {
-        return y.get();
-    }
-
-    public IntegerProperty yProperty() {
-        return y;
-    }
 }

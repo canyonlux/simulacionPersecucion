@@ -1,57 +1,66 @@
 package org.example;
 
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.SimpleIntegerProperty;
+import javafx.collections.ListChangeListener;
+import lombok.Data;
 
+/**
+ * Clase que representa a un enemigo en el juego.
+ * El enemigo se mueve en el mapa en respuesta a los movimientos del jugador.
+ */
+@Data
+public class Enemigo implements ListChangeListener<String> {
 
-public class Enemigo implements Observer  {
-    private IntegerProperty x = new SimpleIntegerProperty();
-    private IntegerProperty y = new SimpleIntegerProperty();
+    private static final int TAMANIO_MAPA = 30; // Tamaño del mapa
+    private String nombre;
+    private int posicionX;
+    private int posicionY;
 
-    // Constructor
-    public Enemigo(int x, int y) {
-        this.x.set(x);
-        this.y.set(y);
-    }
-    public int getX() {
-        return x.get();
-    }
+    /**
+     * Constructor que inicializa el enemigo con una posición aleatoria en el mapa.
+     */
+    public Enemigo() {
+        this.nombre = "Enemigo";
+        this.posicionX = (int) (Math.random() * TAMANIO_MAPA);
+        this.posicionY = (int) (Math.random() * TAMANIO_MAPA);}
 
-    public int getY() {
-        return y.get();
-    }
-    // Método de actualización implementado de la interfaz Observer
+    /**
+     * Método llamado cuando hay cambios en la lista de movimientos del jugador.
+     * El enemigo se mueve hacia la última posición conocida del jugador.
+     *
+     * @param change Información sobre los cambios en la lista de movimientos del jugador.
+     */
     @Override
-    public void actualizar(int jugadorX, int jugadorY) {
-        // Movimiento en el eje X
-        if (this.x.get() < jugadorX) {
-            this.x.set(this.x.get() + Math.min(2, jugadorX - this.x.get())); // Moverse hacia la derecha
-        } else if (this.x.get() > jugadorX) {
-            this.x.set(this.x.get() - Math.min(2, this.x.get() - jugadorX)); // Moverse hacia la izquierda
+    public void onChanged(Change<? extends String> change) {
+        while (change.next()) {
+            if (change.wasAdded()) {
+                String ultimoMovimiento = change.getList().get(change.getList().size() - 1);
+                int[] ultimaPosicionJugador = parsearPosicion(ultimoMovimiento);
+                moverHaciaJugador(ultimaPosicionJugador[0], ultimaPosicionJugador[1]);
+            }
         }
+    }
 
-        // Movimiento en el eje Y
-        if (this.y.get() < jugadorY) {
-            this.y.set(this.y.get() + Math.min(2, jugadorY - this.y.get())); // Moverse hacia abajo
-        } else if (this.y.get() > jugadorY) {
-            this.y.set(this.y.get() - Math.min(2, this.y.get() - jugadorY)); // Moverse hacia arriba
+    /**
+     * Parsea la posición del jugador a partir de una cadena de texto.
+     *
+     * @param posicion Cadena que representa la posición del jugador.
+     * @return Un arreglo con la posición X e Y del jugador.
+     */
+    private int[] parsearPosicion(String posicion) {
+        String[] partes = posicion.split(",");
+        return new int[]{Integer.parseInt(partes[0]), Integer.parseInt(partes[1])};
+    }
+
+    /**
+     * Mueve el enemigo hacia la posición del jugador.
+     *
+     * @param pJugadorX Posición X del jugador.
+     * @param pJugadorY Posición Y del jugador.
+     */
+    private void moverHaciaJugador(int pJugadorX, int pJugadorY) {
+        for (int i = 0; i < 2; i++) {
+            this.posicionX += Integer.compare(pJugadorX, this.posicionX);
+            this.posicionY += Integer.compare(pJugadorY, this.posicionY);
         }
-
-        mostrarPosicion(); // Mostrar la posición actual del enemigo
-    }
-
-
-    // Getters para las propiedades x y y
-    public IntegerProperty xProperty() {
-        return x;
-    }
-
-    public IntegerProperty yProperty() {
-        return y;
-    }
-
-    // Método para mostrar la posición actual del enemigo
-    public void mostrarPosicion() {
-        System.out.println("El enemigo se ha movido a la posición (" + x.get() + "," + y.get() + ").");
     }
 }
